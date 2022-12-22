@@ -21,26 +21,6 @@ from deep_translator import GoogleTranslator
 import heapq
 import pickle
 
-
-
-# def textclassification(a):
-#     api_key   = "XGhjqzEtQylcOulQCSae3rgtB0iHau6qa4DlcYxLFNg"
-#     paralleldots.set_api_key( api_key )
-#     #print(a)
-#     print(paralleldots.taxonomy( a ))
-#     return paralleldots.taxonomy( a )
-
-# def category_extractor(text):
-#     api = textclassification(text)
-#     print(api)
-#     apiresult = api["taxonomy"]
-#     apiresult_dic = {}
-#     for i in apiresult:
-#         apiresult_dic[i["tag"]] = float(i["confidence_score"])
-#     category = heapq.nlargest(1, apiresult_dic, key=apiresult_dic.get)
-
-#     return category[0]
-
 def predict_category(text, classifier, tfidf_vectorizer):
     result = classifier.predict(tfidf_vectorizer.transform([text]))
     return(result[0])
@@ -57,8 +37,7 @@ def NLP_categorizer(txt):
 
     return predict_category(txt, classifier, tfidf_vectorizer)
 
-
-
+# The function is used to translate each article's body text and title
 def process_article(soup, link):
     temp = []
     category = soup.find_all('div', class_='col-md-9')
@@ -70,28 +49,21 @@ def process_article(soup, link):
     body = soup.find_all('div', class_ = 'row bodytext')
     bodyall = soup.find('div', class_ = 'row bodytext').text
     index = int(len(bodyall)/2)
-    print(index)
-    #cat = category_extractor(bodyall[0:index])
     cat = NLP_categorizer(bodyall)
-    #print(body[0])
-
-    #print()
-    #cat = category[0].find_all('img')[0]["src"].replace("/", " ").split()[1]
 
     for img in body[0].find_all('img'):
-        #print(img["src"])
         img["src"] = "https://agenda.ge" + img["src"]
 
-    #newbody = str(body[0])
     for pg in body[0].find_all('p'):
         if pg.string :
             pg.string.replace_with(GoogleTranslator(source='en', target='ja').translate(pg.string).replace(".", "。").replace("グルジア", "ジョージア"))
         else:
             pg.string = GoogleTranslator(source='en', target='ja').translate(pg.text).replace(".", "。").replace("グルジア", "ジョージア")
-        #newbody = newbody.replace(pg.text, GoogleTranslator(source='en', target='ja').translate(pg.text))
 
     finalbody = "[blogcard url=" + link + "]"+ str(body[0])
     print("after process")
+   
+    # Adding title, url, body text, and category into a list then append the list
     #Title
     temp.append(title_ja)
     #url
@@ -100,9 +72,11 @@ def process_article(soup, link):
     temp.append(finalbody)
     #category
     temp.append(cat)
+    
     return temp
 
 
+# Retrieves news articles from agenda.ge
 def getcontents(driver):
     contents = []
     driver.get("https://agenda.ge/en/news/news")
@@ -134,6 +108,7 @@ def getcontents(driver):
 
     print(linkref)
 
+    # Choose top 5 articles with longest text count
     top5 = heapq.nlargest(5, linkref, key=linkref.get)
 
     print(top5)
@@ -144,8 +119,6 @@ def getcontents(driver):
         contents.append(process_article(soup, link))
 
     return contents
-
-## TOdo transger texts to the wordpress and publish
 
 def AAG(requests):
     chrome_options = webdriver.ChromeOptions()
@@ -170,9 +143,9 @@ def AAG(requests):
     driver.get("https://00.ge/wp-admin/index.php")
     sleep(1)
     login = driver.find_element_by_id("user_login")
-    login.send_keys("matomo.niwano@gmail.com")
+    login.send_keys("xxxxxxx") # Email address goes here
     pwd = driver.find_element_by_id("user_pass")
-    pwd.send_keys("@32jG5qqAyk4I#WuV3IOtN*q")
+    pwd.send_keys("xxxxxxxx") # Password to login to wordpress
     submit = driver.find_element_by_id( "wp-submit")
     submit.click()
 
